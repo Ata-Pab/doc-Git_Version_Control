@@ -12,7 +12,7 @@ Content:
 6. [Reverting Changes](#reverting-changes)
 7. [Stashing Changes](#stashing-changes)
 8. [How to use private Github Repo with SSH](#how-to-use-private-github-repo-with-ssh)
-9. [Fetch all remote branches into workspace ](#fetch-all-remote-branches-into-workspace)
+9. [Fetch all remote branches into workspace](#fetch-all-remote-branches-into-workspace)
 
 ## Basic Git Commands
 
@@ -447,6 +447,7 @@ That way, even if you clone via HTTPS by mistake, Git will automatically use SSH
 
 ## Fetch all remote branches into workspace 
 ```bash
+git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' 
 git branch –r 
 git fetch 
 git branch -a 
