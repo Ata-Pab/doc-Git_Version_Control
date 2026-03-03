@@ -2,6 +2,17 @@
 
 Gerrit is a Git server that provides access control for the hosted Git repositories.
 
+1. [Gerrit Project Setup](#gerrit-project-setup)
+1. [Update Local User Name and Email](#update-local-user-name-and-email)
+1. [Before Pushing a Commit to Gerrit Remote](#before-pushing-a-commit-to-gerrit-remote)
+1. [Drop Stash](#drop-stash)
+1. [See Changes in one File](#see-changes-in-one-file)
+1. [Show Last Modifier of a Line](#show-last-modifier-of-a-line)
+1. [Filter Commit History](#filter-commit-history)
+1. [References](#references)
+
+## Gerrit Project Setup
+
 ### Clone Gerrit Project
 
 ```sh
@@ -94,13 +105,250 @@ Notice the reference to a `refs/for/master` branch. Gerrit uses this branch to c
 
 ⚠️ A change must have at least one +2 vote and no -2 votes before it can be submitted. These numerical values do not accumulate. Two +1 votes do not equate to a +2.
 
-### Reworking the Change
+
+## Update Local User Name and Email
+```sh
+git config user.name "atalayp"
+git config user.email "atalayp@gmail.com"
+```
+
+## Before Pushing a Commit to Gerrit Remote
+
+If you have unstaged changes and don't want to push them, you can use `git stash` to temporarily save your changes. This allows you to push your commits without including the unstaged changes.
+
+```sh
+git stash push -u -m "Stash before pushing commit"
+```
+
+- `-u`: Stashes untracked files as well.
+- `-m`: Adds a message to the stash for easier identification.
+
+Verify that your working directory is clean:
+
+```sh
+git status
+```
+
+Fetch latest changes:
+
+```sh
+git fetch origin
+```
+
+Rebase your commits on top of the latest changes from the remote branch:
+
+```sh
+git rebase origin/<branch>
+```
+
+If conflict occurs, fix them manually, stage the resolved files, and continue the rebase process:
+
+```sh
+git add <resolved-file>
+git rebase --continue
+```
+
+Push commits to Gerrit for review:
+
+```sh
+git push origin HEAD:refs/for/<branch>
+```
+
+Restore your stashed changes:
+- To see the list of stashes and identify the one you want to apply
+
+```sh
+git stash list
+```
+- To apply the most recent stash
+
+```sh
+git stash pop
+```
+
+If conflict occurs, fix them manually, stage the resolved files.
+
+```sh
+git add <resolved-file>
+```
+
+### Cleaner Alternative Method
+
+Before pushing the commits:
+
+```sh
+git pull --rebase --autostash
+```
+
+OR
+
+```sh
+git rebase origin/<branch> --autostash
+```
+
+It automatically stashes your changes, rebases your commits on top of the latest changes from the remote branch, and then applies your stashed changes back to your working directory. This method is cleaner and more efficient as it eliminates the need for manual stash management.
+
+## Drop Stash
+
+Inspect the list of stashes to identify the one you want to drop:
+
+```sh
+git stash list
+```
+
+You can inspect the contents of a specific stash to ensure you are dropping the correct one:
+
+```sh
+git stash show -p stash@{<index>}
+```
+
+Drop Stash:
+
+```sh
+git stash drop stash@{<index>}
+```
+
+Drop the latest stash:
+
+```sh
+git stash drop
+```
+
+Drop all stashes:
+
+```sh
+git stash clear
+```
+
+## See Changes in one File
+
+### In working tree (unstaged changes):
+
+```sh
+git diff <file>
+```
+
+- `file`: The name of the file you want to see the changes for (If the file is in the inner directory, include the relative path from the current directory).
 
 
+### In staged changes:
 
-## ❓ Questions 
+```sh
+git diff --cached <file>
+```
+
+### Between branches
+
+```sh
+git diff origin/<branch> -- <file>
+```
+
+### In Commit History
+
+```sh 
+git log -p <file>
+```
+
+- `-p`: Shows the patch (diff) introduced in each commit for the specified file.
+
+```sh 
+git log -p --oneline --graph <file>
+```
+- `--oneline`: Displays each commit on a single line, showing the commit hash and message.
+- `--graph`: Adds a visual representation of the commit history, showing branches and merges.
+
+## Show Last Modifier of a Line
+
+Blame specific lines in a file to see who last modified them:
+
+```sh
+git blame -L <start>,<end> <file>
+```
+
+> Example:
+> ```sh
+> git blame -L 10,20 src/main/java/com/example/MyClass.java
+> ```
+
+## Filter Commit History
+
+To filter commit history based on specific criteria, you can use the `git log` command with various options. Here are some common filters:
+
+### Keyword Search in Commit Messages:
+
+```sh
+git log --grep="<keyword>" -i
+```
+- `--grep="<keyword>"`: Filters commits that contain the specified keyword in their commit message.
+- `-i`: Makes the search case-insensitive.
+- It uses ReGex pattern matching, so you can use regular expressions to refine your search.
+
+Search in all branches:
+
+```sh
+git log --all --grep="<keyword>" -i
+```
+
+Combine with file filtering:
+
+```sh
+git log --grep="<keyword>" -i -- <file>
+```
+
+### Filter history by author:
+
+```sh
+git log --author="<author_name>"
+```
+
+> Example:
+> ```sh
+> git log --author="atalayp"
+> git log --author="atalayp@gmail.com"
+> ```
+
+### Filter history by committer:
+
+```sh
+git log --committer="<committer_name>"
+```
+
+> Example:
+> ```sh
+> git log --committer="atalayp"
+> git log --committer="atalayp@gmail.com"
+> ```
+
+### Filter history by date:
+
+```sh
+git log --since="<date>" --until="<date>"
+```
+- `--since="<date>"`: Shows commits that are newer than the specified date.
+- `--until="<date>"`: Shows commits that are older than the specified date.
+
+> Example:
+> ```sh
+> git log --since="2024-01-01" --until="2024-12-31"
+> ```
 
 
+```sh
+git log --until="2 weeks ago"
+git log --until="2024/02/01"
+git log --until="Feb 1 2024"
+```
+
+### Filter history by commit hash:
+
+```sh
+git log <commit_hash>
+```
+
+### Combine multiple filters:
+
+```sh
+git log --author="<author_name>" --since="<date>" --until="<date>" --grep="<keyword>" -i
 
 ## References
 
