@@ -3,13 +3,15 @@
 Gerrit is a Git server that provides access control for the hosted Git repositories.
 
 1. [Gerrit Project Setup](#gerrit-project-setup)
-1. [Update Local User Name and Email](#update-local-user-name-and-email)
-1. [Before Pushing a Commit to Gerrit Remote](#before-pushing-a-commit-to-gerrit-remote)
-1. [Drop Stash](#drop-stash)
-1. [See Changes in one File](#see-changes-in-one-file)
-1. [Show Last Modifier of a Line](#show-last-modifier-of-a-line)
-1. [Filter Commit History](#filter-commit-history)
-1. [References](#references)
+2. [Update Local User Name and Email](#update-local-user-name-and-email)
+3. [Before Pushing a Commit to Gerrit Remote](#before-pushing-a-commit-to-gerrit-remote)
+4. [Drop Stash](#drop-stash)
+5. [See Changes in one File](#see-changes-in-one-file)
+6. [Show Last Modifier of a Line](#show-last-modifier-of-a-line)
+7. [Filter Commit History](#filter-commit-history)
+8. [Checkout by Commit ID](#checkout-by-commit-id)
+9. [Cherry Pick](#cherry-pick)
+10. [References](#references)
 
 ## Gerrit Project Setup
 
@@ -349,6 +351,78 @@ git log <commit_hash>
 
 ```sh
 git log --author="<author_name>" --since="<date>" --until="<date>" --grep="<keyword>" -i
+```
+
+## Checkout by Commit ID
+
+```sh
+git checkout <commit_id>
+```
+- DETACHED HEAD state: When you checkout a specific commit, you are in a detached HEAD state, which means you are not on any branch. Any new commits you make will not be associated with a branch unless you create a new branch from that point.
+
+Go back to the previous branch:
+
+```sh
+git checkout -
+```
+
+Return to the latest commit (local HEAD) on the current branch:
+
+```sh
+git checkout <branch_name>
+```
+
+## Cherry Pick
+
+Specific commit, but NOT the rest of the commits in the branch. Copies a commit from one place and re-applies it to another branch. This is useful when you want to apply a specific change without merging the entire branch. It creates a new commit with the same changes but a different commit hash.
+
+> ```
+> feature-A: A -- B -- C
+> develop:   D -- E
+> 
+> git checkout develop
+> git cherry-pick <commit_id_of_B>
+> 
+> develop:   D -- E -- B'
+> ```
+
+```sh
+git checkout <branch>
+```
+
+```sh
+git cherry-pick <commit_id>
+```
+
+Gerrit patch transfer between branches:
+- If a change is approved on `develop` branch and you want to apply the same change to `master` branch, you can cherry-pick the commit from `develop` to `master` and push it for review.
+
+```sh
+git checkout master
+git cherry-pick -x <commit_id>
+```
+- `-x`: Appends a line to the original commit message indicating which commit was cherry-picked. This is useful for tracking the origin of the change.
+
+Handling conflicts during cherry-pick:
+- Manually resolve the conflicts in the affected files, stage the resolved files, and continue the cherry-pick process.
+
+```sh
+git add <resolved-file>
+git cherry-pick --continue
+```
+
+If needed:
+- To abort the cherry-pick process and return to the previous state before starting the cherry-pick:
+
+```sh
+git cherry-pick --abort
+```
+
+Cherry-pick multiple commits:
+
+```sh
+git cherry-pick <commit_id1> <commit_id2> <commit_id3>
+```
 
 ## References
 
