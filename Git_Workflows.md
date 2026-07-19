@@ -1,3 +1,35 @@
+# Contents
+
+- [Standard Workflow](#standard-workflow)
+- [Working with Patches (Gerrit Workflow)](#working-with-patches-gerrit-workflow)
+  - [1. Exporting a patch](#1-exporting-a-patch)
+  - [2. Applying a patch](#2-applying-a-patch)
+  - [3. Using patches for code review (Gerrit workflow)](#3-using-patches-for-code-review-gerrit-workflow)
+- [Working with GitHub Issues and Pull Requests](#working-with-github-issues-and-pull-requests)
+  - [Create a feature branch for the issue](#create-a-feature-branch-for-the-issue)
+  - [Work → stage → commit](#work--stage--commit)
+  - [Push the branch to GitHub](#push-the-branch-to-github)
+  - [Open a Pull Request (PR)](#open-a-pull-request-pr)
+  - [Gerrit Workflow](#gerrit-workflow)
+  - [Recommended advanced patterns](#recommended-advanced-patterns)
+- [Opening pull request in CLI](#opening-pull-request-in-cli)
+- [Integrate GitHub issues with VSCode](#integrate-github-issues-with-vscode)
+  - [View & Manage Issues Inside VSCode](#view--manage-issues-inside-vscode)
+  - [Search and Filter Issues (VSCode Query Syntax)](#search-and-filter-issues-vscode-query-syntax)
+  - [Create a New Issue from VSCode](#create-a-new-issue-from-vscode)
+  - [Open an Issue for Editing / Discussion](#open-an-issue-for-editing--discussion)
+  - [Link a Commit to a GitHub Issue via VSCode](#link-a-commit-to-a-github-issue-via-vscode)
+  - [Use GitHub Workflow Commands Inside VSCode](#use-github-workflow-commands-inside-vscode)
+  - [One-Click PR From Assigned Issue](#one-click-pr-from-assigned-issue)
+  - [Auto-Create Branch From Issue](#auto-create-branch-from-issue)
+  - [Complete Workflow](#complete-workflow)
+- [Difference between `git pull --rebase` vs `git pull origin`](#difference-between-git-pull---rebase-vs-git-pull-origin)
+- [“Hotfixes” in Git workflows](#hotfixes-in-git-workflows)
+  - [Hotfix branch](#hotfix-branch)
+  - [Hotfix in Gerrit-driven workflows](#hotfix-in-gerrit-driven-workflows)
+
+---
+
 # Standard Workflow
 
 ### Step 1: Save your changes in stash
