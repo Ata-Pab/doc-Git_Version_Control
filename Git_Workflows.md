@@ -27,6 +27,13 @@
 - [“Hotfixes” in Git workflows](#hotfixes-in-git-workflows)
   - [Hotfix branch](#hotfix-branch)
   - [Hotfix in Gerrit-driven workflows](#hotfix-in-gerrit-driven-workflows)
+- [Working with worktrees](#working-with-worktrees)
+  - [Creating a worktree](#creating-a-worktree)
+  - [Working inside a worktree](#working-inside-a-worktree)
+  - [Committing changes in a worktree](#committing-changes-in-a-worktree)
+  - [Merging a worktree's branch back](#merging-a-worktrees-branch-back)
+  - [Listing, moving and removing worktrees](#listing-moving-and-removing-worktrees)
+  - [Worktrees vs. branches — theoretical differences](#worktrees-vs-branches--theoretical-differences)
 
 ---
 
@@ -663,5 +670,144 @@ You usually:
 3. Submit patch to Gerrit
 4. Review → Approve → Merge
 5. Cherry-pick into the development branch if needed
+
+---
+
+# Working with worktrees
+
+A **worktree** is a separate working directory that is linked to the same Git repository (the same `.git` history, objects, and refs). It lets you have **multiple branches checked out at the same time**, each in its own folder, without cloning the repo again and without stashing/switching in your current folder.
+
+Typical use cases:
+
+* Fixing an urgent bug while a feature branch is mid-work (uncommitted changes) and you don't want to stash it.
+* Running a long build/test on one branch while continuing to code on another.
+* Reviewing a colleague's PR branch side-by-side with your own work.
+* Keeping a permanent `main` worktree for deployments while developing in another.
+
+---
+
+## Creating a worktree
+
+Add a worktree for an **existing** branch:
+
+```sh
+git worktree add ../project-hotfix hotfix/fix-crash
+```
+
+Add a worktree and create a **new** branch at the same time:
+
+```sh
+git worktree add -b feature/123-fix-login-bug ../project-login origin/main
+```
+
+* `../project-login` — path where the new working directory is created (outside or inside the repo's parent folder, but **not** inside the main worktree itself).
+* `feature/123-fix-login-bug` — the new branch name.
+* `origin/main` — the starting point (commit-ish) for the new branch.
+
+Add a worktree in a **detached HEAD** state (no branch, e.g. for a quick look at a tag or commit):
+
+```sh
+git worktree add --detach ../project-check v1.2.1
+```
+
+---
+
+## Working inside a worktree
+
+Each worktree behaves like a normal, independent working directory:
+
+```sh
+cd ../project-login
+git status
+git log --oneline -5
+```
+
+Only one branch can be checked out per worktree at a time (and a branch can only be checked out in **one** worktree at once — Git blocks checking out `feature/123-fix-login-bug` again elsewhere while it's active here).
+
+---
+
+## Committing changes in a worktree
+
+Commits work exactly as in a regular clone — they're written to the **same shared repository**, just under the branch checked out in that worktree:
+
+```sh
+cd ../project-login
+git add .
+git commit -m "Fix: Login page crash on invalid token"
+git push -u origin feature/123-fix-login-bug
+```
+
+Because the object database is shared, this commit is immediately visible from your main worktree too:
+
+```sh
+cd ../project        # your original/main worktree
+git log feature/123-fix-login-bug --oneline -3
+```
+
+---
+
+## Merging a worktree's branch back
+
+Merging (or rebasing) is done from whichever worktree has the **target** branch checked out — there is nothing worktree-specific about the merge itself:
+
+```sh
+cd ../project              # worktree with 'main' checked out
+git merge feature/123-fix-login-bug
+```
+
+Or, following the GitHub workflow, open a PR instead:
+
+```sh
+cd ../project-login
+gh pr create --fill
+```
+
+Once merged/deleted upstream, remove the now-unneeded worktree (see below) — Git will refuse to delete a branch that's still checked out in another worktree.
+
+---
+
+## Listing, moving and removing worktrees
+
+```sh
+git worktree list
+```
+
+```
+C:/repos/project          abcd123 [main]
+C:/repos/project-login    ef01234 [feature/123-fix-login-bug]
+C:/repos/project-hotfix   9876aaa [hotfix/fix-crash]
+```
+
+Move a worktree to a new path:
+
+```sh
+git worktree move ../project-login ../project-login-old
+```
+
+Remove a worktree (directory must be clean, or use `--force`):
+
+```sh
+git worktree remove ../project-login
+```
+
+If the directory was deleted manually instead of via `git worktree remove`, clean up the stale metadata:
+
+```sh
+git worktree prune
+```
+
+---
+
+## Worktrees vs. branches — theoretical differences
+
+| | **Branch** | **Worktree** |
+|---|---|---|
+| **What it is** | A movable pointer (ref) to a commit — pure metadata inside `.git`. | A real, separate directory on disk with its own working files. |
+| **Checkout scope** | Switching branches (`git checkout`) changes the **files in the current directory** to match that branch's commit. | Adding a worktree creates an **additional directory**; the current one is untouched. |
+| **Concurrency** | Only **one** branch can be active in a given working directory at any moment. Switching branches means your uncommitted changes must be committed, stashed, or carried over. | **Multiple** branches can be checked out **simultaneously**, one per worktree — no stashing needed to work on two branches at once. |
+| **Storage cost** | Extremely cheap — a branch is just a 41-byte file pointing to a commit SHA. | More expensive — each worktree has its own full set of checked-out files (though history/objects are still shared, not duplicated). |
+| **Repository identity** | All branches belong to and live inside the **same** working directory's `.git`. | All worktrees share the **same** `.git` object database, refs, and config — they are views into one repository, not clones. |
+| **Relation to each other** | A branch is a *name*; it doesn't imply any particular directory. | A worktree is a *place*; it always has exactly one branch (or a detached commit) checked out. |
+| **Analogy** | Like a bookmark in a shared book — it just marks a page. | Like photocopying the book open to that bookmarked page, so several people can read different pages at once from the same original book. |
 
 ---
