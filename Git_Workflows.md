@@ -1,20 +1,25 @@
 # Standard Workflow
 
-### Step 1: Update your branch
+### Step 1: Save your changes in stash
+```sh
+git stash push -u -m "latest_20072026"
+```
+
+### Step 2: Update your branch
 
 ```sh
-git fetch
+git fetch origin
 git rebase origin/main
 ```
 
-### Step 2: Develop
+### Step 3: Develop
 
 ```sh
 git add -p
 git commit -m "Implement speed control"
 ```
 
-### Step 3: Submit/Push Changes
+### Step 4: Submit/Push Changes
 
 **Gerrit (for review)**:
 
@@ -28,7 +33,12 @@ git push origin HEAD:refs/for/main
 git push origin HEAD:main
 ```
 
-### Step 4: After review comments (Gerrit)
+### Step 5: Pop stash, get your changes
+```sh
+git stash pop
+```
+
+### Step 6: After review comments (Gerrit)
 
 ```sh
 git add fix.c
