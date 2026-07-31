@@ -34,6 +34,13 @@
   - [Merging a worktree's branch back](#merging-a-worktrees-branch-back)
   - [Listing, moving and removing worktrees](#listing-moving-and-removing-worktrees)
   - [Worktrees vs. branches — theoretical differences](#worktrees-vs-branches--theoretical-differences)
+- [Working with submodules](#working-with-submodules)
+  - [Adding a submodule](#adding-a-submodule)
+  - [Cloning a repo that has submodules](#cloning-a-repo-that-has-submodules)
+  - [Updating submodules](#updating-submodules)
+  - [Making changes inside a submodule](#making-changes-inside-a-submodule)
+  - [Removing a submodule](#removing-a-submodule)
+  - [Submodules vs. worktrees vs. branches](#submodules-vs-worktrees-vs-branches)
 
 ---
 
@@ -809,5 +816,119 @@ git worktree prune
 | **Repository identity** | All branches belong to and live inside the **same** working directory's `.git`. | All worktrees share the **same** `.git` object database, refs, and config — they are views into one repository, not clones. |
 | **Relation to each other** | A branch is a *name*; it doesn't imply any particular directory. | A worktree is a *place*; it always has exactly one branch (or a detached commit) checked out. |
 | **Analogy** | Like a bookmark in a shared book — it just marks a page. | Like photocopying the book open to that bookmarked page, so several people can read different pages at once from the same original book. |
+
+---
+
+# Working with submodules
+
+A **submodule** is a Git repository embedded inside another Git repository, checked out at a specific commit. Unlike worktrees (which share one `.git` object database), a submodule is a genuinely **separate repository** with its own `.git`, history, remotes, and branches — the parent repo just records *which commit* of that separate repo to use.
+
+Typical use cases:
+
+* Vendoring a third-party library while keeping the ability to pull upstream updates.
+* Sharing common code (drivers, shared libs, protocol definitions) across multiple independent projects.
+* Pinning a dependency to an exact, reviewed commit instead of a floating version.
+
+---
+
+## Adding a submodule
+
+```sh
+git submodule add https://github.com/example/lib.git libs/example-lib
+```
+
+This:
+
+* Clones `lib.git` into `libs/example-lib`.
+* Creates/updates a `.gitmodules` file recording the URL and path.
+* Stages `libs/example-lib` as a special entry (a *gitlink*) pointing at the submodule's current commit — not its file contents.
+
+Commit it like any other change:
+
+```sh
+git add .gitmodules libs/example-lib
+git commit -m "Add example-lib as a submodule"
+```
+
+---
+
+## Cloning a repo that has submodules
+
+A plain `git clone` leaves submodule directories **empty**. Either clone recursively:
+
+```sh
+git clone --recurse-submodules https://github.com/you/project.git
+```
+
+Or initialize them afterwards:
+
+```sh
+git clone https://github.com/you/project.git
+cd project
+git submodule update --init --recursive
+```
+
+---
+
+## Updating submodules
+
+Pull the exact commit recorded by the parent repo (no changes to submodule branch):
+
+```sh
+git submodule update --init --recursive
+```
+
+Update a submodule to the **latest** commit on its tracked branch (recorded in `.gitmodules`):
+
+```sh
+git submodule update --remote libs/example-lib
+```
+
+Then commit the bump in the parent repo — the pointer change is a normal diff:
+
+```sh
+git add libs/example-lib
+git commit -m "Bump example-lib to latest main"
+```
+
+Fetch and update every submodule at once:
+
+```sh
+git submodule update --remote --merge
+```
+
+---
+
+## Making changes inside a submodule
+
+A submodule is a real repo — `cd` into it and use Git normally:
+
+```sh
+cd libs/example-lib
+git checkout -b fix/upstream-bug
+git commit -am "Fix off-by-one in parser"
+git push origin fix/upstream-bug
+```
+
+Then go back to the parent repo and record the new commit it should point to:
+
+```sh
+cd ../..
+git add libs/example-lib
+git commit -m "Point example-lib at fix/upstream-bug"
+```
+
+> If you forget the second commit, the parent repo still points at the **old** submodule commit — `git status` in the parent will show the submodule as having "new commits" until you stage it.
+
+---
+
+## Removing a submodule
+
+```sh
+git submodule deinit -f libs/example-lib
+git rm -f libs/example-lib
+rm -rf .git/modules/libs/example-lib
+git commit -m "Remove example-lib submodule"
+```
 
 ---
